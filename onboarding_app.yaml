@@ -1,0 +1,115 @@
+name: "Employee Onboarding"
+description: "Initiate the process to onboard a new employee"
+form:
+  sections:
+  - !<section>
+    name: "Employee Onboarding"
+    helpText: ""
+    fields:
+    - !<text>
+      label: "Employee's Name"
+      required: true
+    - !<user>
+      label: "Reporting Manager"
+      required: true
+    - !<yesno>
+      id: "external_email"
+      label: "New Person External Email"
+  - !<section>
+    name: "Employee Personal Details"
+  - !<section>
+    name: "Employee Bank Details"
+  - !<section>
+    name: "Document Proofs"
+  - !<section>
+    name: "Reporting Manager's Update"
+    fields:
+    - !<yesno>
+      label: "IT Assets Required?"
+      required: true
+    - !<yesno>
+      label: "Other Assets Required?"
+      required: true
+  - !<section>
+    name: "IT Assets to be allocated"
+  - !<section>
+    name: "Other Assets to be allocated"
+  - !<section>
+    name: "IT Assets Allocated"
+  - !<section>
+    name: "Other Assets Allocated"
+  - !<section>
+    name: "HR Comments"
+workflow:
+  tasks:
+  - !<start>
+    whoCanStartIt: "*@test.com"
+    permissions:
+      default: HIDDEN
+      sectionPermissions:
+        "Employee Onboarding": EDITABLE
+  - !<input>
+    name: "Update Employee Information"
+    allowedInputer: ["req.initiator"]
+    advancedAllowedInputer: "NOBODY"
+    permissions:
+      default: HIDDEN
+      sectionPermissions:
+        "Employee Onboarding": READONLY
+        "Employee Personal Details": EDITABLE
+        "Employee Bank Details": EDITABLE
+        "Document Proofs": EDITABLE
+  - !<approval>
+    name: "Approve"
+    allowedApprovers: ["form.reporting manager"]
+    permissions:
+      default: HIDDEN
+      sectionPermissions:
+        "Employee Onboarding": READONLY
+        "Employee Personal Details": READONLY
+        "Document Proofs": READONLY
+        "Reporting Manager's Update": EDITABLE
+        "IT Assets to be allocated": EDITABLE
+        "Other Assets to be allocated": EDITABLE
+  - !<parallel>
+    branches:
+    - name: "IT Asset Allocation"
+      happens: "IT_Assets_Required=1"
+      tasks:
+        - !<input>
+          name: "Allocate IT Assets"
+          allowedInputer: ["req.initiator"]
+          permissions:
+            default: HIDDEN
+            sectionPermissions:
+              "Employee Onboarding": READONLY
+              "Reporting Manager's Update": READONLY
+              "IT Assets to be allocated": READONLY
+              "IT Assets Allocated": EDITABLE
+    - name: "Other Assets Allocation"
+      happens: "Other_Assets_Required=1"
+      tasks:
+        - !<input>
+          name: "Allocate Other Assets"
+          allowedInputer: ["req.initiator"]
+          permissions:
+            default: HIDDEN
+            sectionPermissions:
+              "Employee Onboarding": READONLY
+              "Reporting Manager's Update": READONLY
+              "Other Assets to be allocated": READONLY
+              "Other Assets Allocated": EDITABLE
+  - !<approval>
+    name: "Reporting Manger's Review"
+    allowedApprovers: ["form.reporting manager"]
+    permissions:
+      default: READONLY
+      sectionPermissions:
+        "HR Comments": HIDDEN
+  - !<input>
+    name: "HR Review"
+    allowedInputer: ["req.initiator"]
+    permissions:
+      default: READONLY
+      sectionPermissions:
+        "HR Comments": EDITABLE
